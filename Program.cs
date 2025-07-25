@@ -705,7 +705,7 @@ namespace MHPlatTest
 
 
                 //Configuration for the NMPC controller
-                int numberSamplesToEvaluate = 1000; //Todo Process Number samples 1000
+                int numberSamplesToEvaluate = 800; //Todo Process Number samples 800
                 int numberRepetitionControlProcess = numberTestRepetition;//Todo Process Repetition 100
                 int controlHorizonLength = 2;
                 int predictionHorizonLength = 10;
@@ -774,8 +774,8 @@ namespace MHPlatTest
                 MHConf.Where(x => x.Name == MHAlgoParameters.FunctionValueSigmaTolerance).First().Value = 1e-16;
                 MHConf.Where(x => x.Name == MHAlgoParameters.StoppingCriteriaType).First().Value = StoppingCriteriaType.MaximalNumberOfFunctionEvaluation;
                 MHConf.Where(x => x.Name == MHAlgoParameters.ProblemDimension).First().Value = controlHorizonLength;
-                MHConf.Where(x => x.Name == MHAlgoParameters.MaxFunctionEvaluationNumber).First().Value = 400;
-                MHConf.Where(x => x.Name == MHAlgoParameters.PopulationSize).First().Value = 20;
+                MHConf.Where(x => x.Name == MHAlgoParameters.MaxFunctionEvaluationNumber).First().Value = 200;
+                MHConf.Where(x => x.Name == MHAlgoParameters.PopulationSize).First().Value = 10;
 
 
 
@@ -806,8 +806,8 @@ namespace MHPlatTest
                 MHConf.Where(x => x.Name == MHAlgoParameters.AEEABC_TuneProbabilityEquationType).First().Value = true;
                 MHConf.Where(x => x.Name == MHAlgoParameters.ABC_ProbabilityEquationType).First().Value = ABC_ProbabilityEquationType.ComplementOriginal;
                 MHConf.Where(x => x.Name == MHAlgoParameters.ScoutGeneration).First().Value = ScoutGenerationType.Random;
-                MHConf.Where(x => x.Name == MHAlgoParameters.AEEABC_NumberOfIterationsToTuneParameters).First().Value = 20;
-                usedMetaheuristicAlgorithmList.Add(new AdaABC(MHConf, "Proposed ALgo", randomGenerator.Next()));
+                MHConf.Where(x => x.Name == MHAlgoParameters.AEEABC_NumberOfIterationsToTuneParameters).First().Value = 5;
+                usedMetaheuristicAlgorithmList.Add(new AdaABC(MHConf, "Proposed Algo", randomGenerator.Next()));
 
 
 
