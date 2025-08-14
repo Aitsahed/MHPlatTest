@@ -1,4 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
+// See https://aka.ms/new-console-template for more information
 
 
 using MHPlatTest.Algorithms;
@@ -12,10 +12,10 @@ using System.Text.Json;
 using System.Runtime.InteropServices;
 using System.Linq.Expressions;
 using MHPlatTest.BenchmarkFunctions;
-using MHPlatTest.BenchmarkFunctions.FixedDimension;
 using System.Diagnostics;
 using MHPlatTest.BenchmarkProcesses;
 using System.Diagnostics.Metrics;
+using MHPlatTest.BenchmarkFunctions.CEC2021;
 
 namespace MHPlatTest
 {
@@ -46,8 +46,6 @@ namespace MHPlatTest
         static void Main()
         {
 
-            //The first thing is to set which type of optimization the user want to run
-            OptimizationExperienceToRunType optimizationExperienceToRun = OptimizationExperienceToRunType.NumericalBenchmarkFunctionTests;
 
 
 
@@ -114,6 +112,11 @@ namespace MHPlatTest
             List<IMHAlgorithm> usedMetaheuristicAlgorithmList = new List<IMHAlgorithm>();
             List<List<GlobalBatchResultModel>?> GlobalResults = new();
             List<string> algoToIgnore = new List<string>();
+
+
+
+            //The first thing is to set which type of optimization the user want to run
+            OptimizationExperienceToRunType optimizationExperienceToRun = OptimizationExperienceToRunType.NumericalBenchmarkFunctionTests;
 
 
             //////////////////////////////////////////////////////////////////////////////////
@@ -294,8 +297,9 @@ namespace MHPlatTest
 
 
 
-                #region Fixed dimension benchmark functions
-                dimensionToUse = 2;
+
+                #region  CEC21 benchmark functions
+                dimensionToUse = 10;
                 foreach (var item in usedMetaheuristicAlgorithmList)
                 {
                     item.OptimizationConfiguration.Where(x => x.Name == MHAlgoParameters.ProblemDimension).First().Value = dimensionToUse;
@@ -306,17 +310,26 @@ namespace MHPlatTest
                     item.OptimizationConfiguration.Where(x => x.Name == MHAlgoParameters.ABC_LimitValue).First().Value = 100;
                 }
 
-                //Working with the fixed dimension benchmark functions
-                benchmarkFunctionNameToIgnoreList = new List<string>() { "CEC21", "NotToBeUsed" };
-                benchmarkFunctionNameToIncludeList = new List<string>() { "FixedDimension" };
-                TempUsedBenchmarkFunctionList = LoadBenchmarkFunctions(benchmarkFunctionNameToIgnoreList, benchmarkFunctionNameToIncludeList);
-                usedBenchmarkFunctionList.Add(TempUsedBenchmarkFunctionList);
+                //CEC21 functions
+                //The dimension for the cec21 is Dim=10
+                usedMetaheuristicAlgorithmList.ForEach(x => x.OptimizationConfiguration.Where(y => y.Name == MHAlgoParameters.ProblemDimension).First().Value = dimensionToUse);
+                usedMetaheuristicAlgorithmList.ForEach(x => x.OptimizationConfiguration.Where(y => y.Name == MHAlgoParameters.ABC_LimitValue).First().Value = 100);
 
+
+                benchmarkFunctionNameToIgnoreList = new List<string>() { "NotToBeUsed" };
+                benchmarkFunctionNameToIncludeList = new List<string>() { "CEC21" };
+                TempUsedBenchmarkFunctionList = new List<IBenchmark> { new CEC21_BentCigar(), new CEC21_schwefel(), new CEC21_Lunacek_bi_Rastrigin(), new CEC21_GriewankRosenbrock(), new CEC21_HybridFunction01(), new CEC21_HybridFunction02(), new CEC21_HybridFunction03(), new CEC21_CompositionFunction1(), new CEC21_CompositionFunction2(), new CEC21_CompositionFunction3() };
+                //TempUsedBenchmarkFunctionList = new() { new CEC21_HybridFunction01() };
+
+
+                usedBenchmarkFunctionList.Add(TempUsedBenchmarkFunctionList);
                 GlobalResults.Add(mainProgram.StartOptimizationProcess(usedMetaheuristicAlgorithmList, usedBenchmarkFunctionList[usedBenchmarkFunctionList.Count - 1], numberTestRepetition, randomGenerator, runOneProcessOnlyFlag));
                 configurationTextDetailsList.Add(MHConf.MHConfig2String());
 
+
+
                 //Printing the used confguration
-                Console.WriteLine("Configuration for Fixed dimension benchmark functions");
+                Console.WriteLine("Configuration for CEC21");
                 Console.WriteLine(configurationTextDetailsList[configurationTextDetailsList.Count - 1]);
                 Console.WriteLine("");
                 Console.WriteLine("Results");
@@ -352,10 +365,7 @@ namespace MHPlatTest
                 }
 
                 contentCSVFile = "";
-
-
                 #endregion
-
 
 
 
@@ -402,278 +412,24 @@ namespace MHPlatTest
 
 
 
-            //////////////////////////////////////////////////////////////////////////////////
-            //////////////////////////////////////////////////////////////////////////////////
-            //////////////////////////////////////////////////////////////////////////////////
-            //////////////////////////////////////////////////////////////////////////////////
-            //If the user is running convergence analysis on the numerical benchmark functions
-            //////////////////////////////////////////////////////////////////////////////////
-            //////////////////////////////////////////////////////////////////////////////////
-            //////////////////////////////////////////////////////////////////////////////////
-            //////////////////////////////////////////////////////////////////////////////////
-            if (optimizationExperienceToRun == OptimizationExperienceToRunType.ConvergenceBenchmarkFunctionTest)
-            {
-
-                //Preparing the stats to be gathered
-                csvFile_StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.OptimalFunctionValue, StatsToComputeType.Mean));
-                csvFile_StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.OptimalFunctionValue, StatsToComputeType.Max));
-                csvFile_StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.OptimalFunctionValue, StatsToComputeType.Min));
-                csvFile_StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.OptimalFunctionValue, StatsToComputeType.STD));
-                csvFile_StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.OptimalFunctionValue, StatsToComputeType.Median));
-                csvFile_StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.NumberOfFunctionEvaluation, StatsToComputeType.Mean));
-                csvFile_StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.NumberOfTotalIteration, StatsToComputeType.Mean));
-                csvFile_StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.OptimumFound, StatsToComputeType.Mean));
-                csvFile_StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.ScoutBeesGeneratedCount, StatsToComputeType.Mean));
-
-                StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.OptimalFunctionValue, StatsToComputeType.Mean));
-                StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.OptimalFunctionValue, StatsToComputeType.Max));
-                StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.OptimalFunctionValue, StatsToComputeType.Min));
-                StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.OptimalFunctionValue, StatsToComputeType.STD));
-                StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.OptimalFunctionValue, StatsToComputeType.Median));
-                StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.NumberOfFunctionEvaluation, StatsToComputeType.Mean));
-                StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.NumberOfTotalIteration, StatsToComputeType.Mean));
-                StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.OptimumFound, StatsToComputeType.Mean));
-                StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.ScoutBeesGeneratedCount, StatsToComputeType.Mean));
 
 
 
 
-                //Creating file for stats in disk
-                counterCSVFile = 1;
-                pathCSVFile = pathFolderForResults + "ConvergenceData_" + executionTimeStamp + ".csv";
 
 
-
-                int dimensionToUse = 0;
-                populationSize = 40; // Todo convergence population size 40
 
-                //Working the enchmark functions with varying dimensionality
-                //Choose the dimensions you want to test the optimization algorithms for
-                for (int i = 0; i < 1; i++)
-                {
-                    usedMetaheuristicAlgorithmList = new List<IMHAlgorithm>();
 
-                    switch (i)
-                    {
-                        case 0:
-                            dimensionToUse = 10;
-                            break;
-                        case 1:
-                            dimensionToUse = 30;
-                            break;
-                        case 2:
-                            dimensionToUse = 50;
-                            break;
-                        case 3:
-                            dimensionToUse = 100;
-                            break;
-                        case 4:
-                            dimensionToUse = 250;
-                            break;
-                        default:
-                            break;
-                    }
 
 
 
-                    MHConf.Where(x => x.Name == MHAlgoParameters.StopOptimizationWhenOptimumIsReached).First().Value = true;
-                    //MHConf.Where(x => x.Name == MHAlgoParameters.MaxItertaionNumber).First().Value = 1500;
-                    MHConf.Where(x => x.Name == MHAlgoParameters.ABC_LimitValue).First().Value = 100;
-                    MHConf.Where(x => x.Name == MHAlgoParameters.FunctionValueSigmaTolerance).First().Value = 1e-16;
-                    MHConf.Where(x => x.Name == MHAlgoParameters.StoppingCriteriaType).First().Value = StoppingCriteriaType.MaximalNumberOfFunctionEvaluation;
-                    MHConf.Where(x => x.Name == MHAlgoParameters.ProblemDimension).First().Value = dimensionToUse;
-                    MHConf.Where(x => x.Name == MHAlgoParameters.MaxFunctionEvaluationNumber).First().Value = 500000; // todo convergence MaxFunctionEvaluationNumber
-                    MHConf.Where(x => x.Name == MHAlgoParameters.PopulationSize).First().Value = populationSize;
 
 
-                    //Divers ABC algos
-                    usedMetaheuristicAlgorithmList.Add(new DirectedABC(MHConf, "", randomGenerator.Next()));
-                    usedMetaheuristicAlgorithmList.Add(new BasicABC(MHConf, "", randomGenerator.Next()));
-                    usedMetaheuristicAlgorithmList.Add(new ImprovedABCAdaptiveMingZhao(MHConf, "", randomGenerator.Next()));
-                    usedMetaheuristicAlgorithmList.Add(new GBestABC(MHConf, "", randomGenerator.Next()));
 
 
-                    //MABC
-                    MHConf.Where(x => x.Name == MHAlgoParameters.MABC_LimitValue).First().Value = 200;
-                    MHConf.Where(x => x.Name == MHAlgoParameters.MABC_ModificationRate).First().Value = 0.4d;
-                    MHConf.Where(x => x.Name == MHAlgoParameters.MABC_UseScalingFactor).First().Value = true;
-                    usedMetaheuristicAlgorithmList.Add(new MABC(MHConf, "MABC Limit200 ScaFactor MR.4", randomGenerator.Next()));
 
 
-                    //ARABC
-                    MHConf.Where(x => x.Name == MHAlgoParameters.ABC_LimitValue).First().Value = dimensionToUse * (int)MHConf.Where(x => x.Name == MHAlgoParameters.PopulationSize).First().Value;
-                    usedMetaheuristicAlgorithmList.Add(new ARABC(MHConf, "", randomGenerator.Next()));
-                    MHConf.Where(x => x.Name == MHAlgoParameters.ABC_LimitValue).First().Value = 100;
-
-
-
-                    //AdaABC
-                    MHConf.Where(x => x.Name == MHAlgoParameters.AEEABC_TuneNumberOfDimensionUsingGBest).First().Value = true;
-                    MHConf.Where(x => x.Name == MHAlgoParameters.AEEABC_TuneScoutGenerationType).First().Value = true;
-                    MHConf.Where(x => x.Name == MHAlgoParameters.AEEABC_TuneProbabilityEquationType).First().Value = true;
-                    MHConf.Where(x => x.Name == MHAlgoParameters.ABC_ProbabilityEquationType).First().Value = ABC_ProbabilityEquationType.ComplementOriginal;
-                    MHConf.Where(x => x.Name == MHAlgoParameters.ScoutGeneration).First().Value = ScoutGenerationType.Random;
-                    MHConf.Where(x => x.Name == MHAlgoParameters.AEEABC_NumberOfIterationsToTuneParameters).First().Value = 20;
-                    usedMetaheuristicAlgorithmList.Add(new AdaABC(MHConf, "Proposed Algo", randomGenerator.Next()));
-
-
-
-
-                    GlobalResults.Add(mainProgram.StartOptimizationProcess(usedMetaheuristicAlgorithmList, usedBenchmarkFunctionList[0], numberTestRepetition, randomGenerator, runOneProcessOnlyFlag));
-                    configurationTextDetailsList.Add(MHConf.MHConfig2String());
-                    StatsByMHAlgoAndBenchFunc.Add(ComputeAndDisplayStats(GlobalResults[i], algoToIgnore, StatsToComputeList));
-
-
-
-
-                    #region Stats Handling
-
-                    //Saving stats as CSV File
-                    StatsForCSV = DiversExtendedProperties.ComputeStat(GlobalResults[GlobalResults.Count - 1], csvFile_StatsToComputeList, true, algoToIgnore, GroupByType.Algorithm, OrderingType.None);
-                    ListStatsForCSV.Add(StatsForCSV);
-
-
-                    contentCSVFile += "Configuration" + Environment.NewLine;
-                    contentCSVFile += "Nbre repetition" + numberTestRepetition + Environment.NewLine;
-                    contentCSVFile += configurationTextDetailsList[GlobalResults.Count - 1] + Environment.NewLine + "Results" + Environment.NewLine + Environment.NewLine;
-                    contentCSVFile += DiversExtendedProperties.FramtStatsCSVFile(StatsForCSV, csvFile_StatsToComputeList);
-
-                    contentCSVFile += Environment.NewLine;
-                    contentCSVFile += Environment.NewLine;
-                    contentCSVFile += Environment.NewLine;
-                    contentCSVFile += Environment.NewLine;
-                    contentCSVFile += Environment.NewLine;
-
-
-
-                    //Saving Data into disk
-                    try
-                    {
-                        File.AppendAllText(pathCSVFile, contentCSVFile);
-                    }
-                    catch (Exception)
-                    {
-                        pathCSVFile = pathFolderForResults + "ConvergenceData_" + executionTimeStamp + counterCSVFile + ".csv";
-                        while (File.Exists(pathCSVFile) == true)
-                        {
-                            pathCSVFile = pathFolderForResults + "ConvergenceData_" + executionTimeStamp + counterCSVFile++ + ".csv";
-                        }
-                        File.AppendAllText(pathCSVFile, contentCSVFile);
-                    }
-
-                    contentCSVFile = "";
-
-                    #endregion
-
-                }
-
-
-
-
-
-
-                #region Fixed dimension benchmark functions
-                dimensionToUse = 2;
-                foreach (var item in usedMetaheuristicAlgorithmList)
-                {
-                    item.OptimizationConfiguration.Where(x => x.Name == MHAlgoParameters.ProblemDimension).First().Value = dimensionToUse;
-                }
-
-                foreach (var item in usedMetaheuristicAlgorithmList)
-                {
-                    item.OptimizationConfiguration.Where(x => x.Name == MHAlgoParameters.ABC_LimitValue).First().Value = 100;
-                }
-
-                //Working with the fixed dimension benchmark functions
-                benchmarkFunctionNameToIgnoreList = new List<string>() { "CEC21", "NotToBeUsed" };
-                benchmarkFunctionNameToIncludeList = new List<string>() { "FixedDimension" };
-                TempUsedBenchmarkFunctionList = LoadBenchmarkFunctions(benchmarkFunctionNameToIgnoreList, benchmarkFunctionNameToIncludeList);
-                usedBenchmarkFunctionList.Add(TempUsedBenchmarkFunctionList);
-
-                GlobalResults.Add(mainProgram.StartOptimizationProcess(usedMetaheuristicAlgorithmList, usedBenchmarkFunctionList[usedBenchmarkFunctionList.Count - 1], numberTestRepetition, randomGenerator, runOneProcessOnlyFlag));
-                configurationTextDetailsList.Add(MHConf.MHConfig2String());
-
-                //Printing the used confguration
-                Console.WriteLine("Configuration for Fixed dimension benchmark functions");
-                Console.WriteLine(configurationTextDetailsList[configurationTextDetailsList.Count - 1]);
-                Console.WriteLine("");
-                Console.WriteLine("Results");
-                StatsByMHAlgoAndBenchFunc.Add(ComputeAndDisplayStats(GlobalResults[GlobalResults.Count - 1], algoToIgnore, StatsToComputeList));
-
-
-                //Saving stats as CSV File
-                StatsForCSV = DiversExtendedProperties.ComputeStat(GlobalResults[GlobalResults.Count - 1], csvFile_StatsToComputeList, true, algoToIgnore, GroupByType.Algorithm, OrderingType.None);
-                ListStatsForCSV.Add(StatsForCSV);
-
-                contentCSVFile += "Configuration" + Environment.NewLine + configurationTextDetailsList[configurationTextDetailsList.Count - 1] + Environment.NewLine + "Results" + Environment.NewLine + Environment.NewLine;
-                contentCSVFile += DiversExtendedProperties.FramtStatsCSVFile(StatsForCSV, csvFile_StatsToComputeList);
-
-                contentCSVFile += Environment.NewLine;
-                contentCSVFile += Environment.NewLine;
-                contentCSVFile += Environment.NewLine;
-                contentCSVFile += Environment.NewLine;
-                contentCSVFile += Environment.NewLine;
-
-
-                try
-                {
-                    File.AppendAllText(pathCSVFile, contentCSVFile);
-                }
-                catch (Exception)
-                {
-                    pathCSVFile = pathFolderForResults + "ConvergenceData_" + executionTimeStamp + counterCSVFile + ".csv";
-                    while (File.Exists(pathCSVFile) == true)
-                    {
-                        pathCSVFile = pathFolderForResults + "ConvergenceData_" + executionTimeStamp + counterCSVFile++ + ".csv";
-                    }
-                    File.AppendAllText(pathCSVFile, contentCSVFile);
-                }
-
-                contentCSVFile = "";
-
-
-                #endregion
-
-
-
-
-                //Saving result as seialized object
-                string jsonString = JsonSerializer.Serialize(ListStatsForCSV);
-
-                int counter = 1;
-                string fileName = pathFolderForResults + "ConvergenceData_" + counter + ".txt";
-                while (File.Exists(fileName) == true)
-                {
-                    fileName = pathFolderForResults + "ConvergenceData_" + counter++ + ".txt";
-                }
-
-                File.WriteAllText(fileName, jsonString);
-            }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            optimizationExperienceToRun = OptimizationExperienceToRunType.ControlProcessTests;
 
             //////////////////////////////////////////////////////////////////////////////////
             //////////////////////////////////////////////////////////////////////////////////
@@ -690,6 +446,7 @@ namespace MHPlatTest
 
 
                 //Preparing the stats to be gathered
+                StatsToComputeList.Clear();
                 StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.ProcessMSE, StatsToComputeType.Mean));
                 StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.ProcessMCV, StatsToComputeType.Mean));
                 StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.ExecutionTime, StatsToComputeType.Mean));
@@ -697,6 +454,7 @@ namespace MHPlatTest
                 StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.ScoutBeesGeneratedCount, StatsToComputeType.Mean));
 
 
+                csvFile_StatsToComputeList.Clear();
                 csvFile_StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.ProcessMSE, StatsToComputeType.Mean));
                 csvFile_StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.ProcessMCV, StatsToComputeType.Mean));
                 csvFile_StatsToComputeList.Add(new Tuple<MHOptimizationResult, StatsToComputeType>(MHOptimizationResult.ExecutionTime, StatsToComputeType.Mean));
@@ -705,7 +463,7 @@ namespace MHPlatTest
 
 
                 //Configuration for the NMPC controller
-                int numberSamplesToEvaluate = 800; //Todo Process Number samples 800
+                int numberSamplesToEvaluate = 800; //Todo Process Number samples 1000
                 int numberRepetitionControlProcess = numberTestRepetition;//Todo Process Repetition 100
                 int controlHorizonLength = 2;
                 int predictionHorizonLength = 10;
@@ -807,7 +565,7 @@ namespace MHPlatTest
                 MHConf.Where(x => x.Name == MHAlgoParameters.ABC_ProbabilityEquationType).First().Value = ABC_ProbabilityEquationType.ComplementOriginal;
                 MHConf.Where(x => x.Name == MHAlgoParameters.ScoutGeneration).First().Value = ScoutGenerationType.Random;
                 MHConf.Where(x => x.Name == MHAlgoParameters.AEEABC_NumberOfIterationsToTuneParameters).First().Value = 5;
-                usedMetaheuristicAlgorithmList.Add(new AdaABC(MHConf, "Proposed Algo", randomGenerator.Next()));
+                usedMetaheuristicAlgorithmList.Add(new AdaABC(MHConf, "Proposed ALgo", randomGenerator.Next()));
 
 
 
