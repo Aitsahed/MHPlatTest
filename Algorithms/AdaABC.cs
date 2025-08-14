@@ -1,4 +1,4 @@
-﻿
+
 using MathNet.Numerics.Financial;
 using MHPlatTest.Divers;
 using MHPlatTest.Interfaces;
@@ -668,12 +668,19 @@ namespace MHPlatTest.Algorithms
                         phiValue = (rand.NextDouble() * 2) - 1;
 
                         distanceBetweenFoodSources = populationArray[arrayLine, dimensionToUpdateItem] - populationArray[firstFoodSourceID, dimensionToUpdateItem];
-                        distancetoGlobalBestFoodSource = globalBestPosition[dimensionToUpdateItem] - populationArray[arrayLine, dimensionToUpdateItem];
 
                         // update the food source location
                         currentParticlePositionArray[dimensionToUpdateItem] = populationArray[arrayLine, dimensionToUpdateItem]
-                                                                            + phiValue * distanceBetweenFoodSources
-                                                                            + rand.NextDouble() * 1.5 * distancetoGlobalBestFoodSource;
+                                                                            + phiValue * distanceBetweenFoodSources;
+
+
+                        //If in Exploitation mode add distance to best food source
+                        if (currentExplorationVsExploitationStatus == ExplorationVsExploitationType.DriveTowardExploitation)
+                        {
+                            distancetoGlobalBestFoodSource = globalBestPosition[dimensionToUpdateItem] - populationArray[arrayLine, dimensionToUpdateItem];
+                            currentParticlePositionArray[dimensionToUpdateItem] += rand.NextDouble() * 1.5 * distancetoGlobalBestFoodSource;
+                        }
+
 
                         //check if newly food sources within the serach space boundary
                         if (currentParticlePositionArray[dimensionToUpdateItem] > benchmarkFunction.SearchSpaceMaxValue[dimensionToUpdateItem])
@@ -912,12 +919,17 @@ namespace MHPlatTest.Algorithms
                         phiValue = (rand.NextDouble() * 2) - 1;
 
                         distanceBetweenFoodSources = populationArray[selectedFoodSourceID, dimensionToUpdateItem] - populationArray[firstFoodSourceID, dimensionToUpdateItem];
-                        distancetoGlobalBestFoodSource = globalBestPosition[dimensionToUpdateItem] - populationArray[selectedFoodSourceID, dimensionToUpdateItem];
 
                         // update the food source location
                         currentParticlePositionArray[dimensionToUpdateItem] = populationArray[selectedFoodSourceID, dimensionToUpdateItem]
-                                                                            + phiValue * distanceBetweenFoodSources
-                                                                            + rand.NextDouble() * 1.5 * distancetoGlobalBestFoodSource;
+                                                                            + phiValue * distanceBetweenFoodSources;
+
+                        //If in Exploitation mode add distance to best food source
+                        if (currentExplorationVsExploitationStatus == ExplorationVsExploitationType.DriveTowardExploitation)
+                        {
+                            distancetoGlobalBestFoodSource = globalBestPosition[dimensionToUpdateItem] - populationArray[selectedFoodSourceID, dimensionToUpdateItem];
+                            currentParticlePositionArray[dimensionToUpdateItem] += rand.NextDouble() * 1.5 * distancetoGlobalBestFoodSource;
+                        }
 
 
                         //check if newly food sources within the serach space boundary
@@ -1271,11 +1283,9 @@ namespace MHPlatTest.Algorithms
 
                         if (AEEABC_TuneNumberOfDimensionUsingGBest == true)
                         {
-                            //reduce the number of Gbest dimension to increase exploration
-                            AEEABC_NumberOfDimensionUsingGBest--;
+                            //Set the number of dimension to 1 toincrease exploration
+                            AEEABC_NumberOfDimensionUsingGBest = 1;
 
-                            //Limit the lowest value to 1
-                            if (AEEABC_NumberOfDimensionUsingGBest < 1) AEEABC_NumberOfDimensionUsingGBest = 1;
                         }
 
 
